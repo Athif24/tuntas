@@ -1,106 +1,114 @@
-# Tuntas — Flutter App Plan
+# Tuntas — Rencana Aplikasi Flutter
 
-## 1. Project Structure
+## 1. Struktur Proyek
 
 ```
 Tuntas/
 ├── lib/
-│   ├── main.dart                          # App entry point, MaterialApp setup, theme, and route table
+│   ├── main.dart                          # Entry point aplikasi, setup MaterialApp, tema, dan tabel rute
 │   ├── models/
-│   │   └── task.dart                      # Task data model class (id, title, description, date, type, isCompleted)
+│   │   └── task.dart                      # Model data Task (id, title, description, due_date, category, is_done)
 │   ├── database/
-│   │   └── database_helper.dart           # SQLite database singleton: open, create tables, CRUD operations for tasks & users
+│   │   └── database_helper.dart           # Singleton SQLite: buka, buat tabel, operasi CRUD
 │   ├── providers/
-│   │   ├── task_provider.dart             # Manages task list state, CRUD operations, exposes tasks to UI
-│   │   └── auth_provider.dart             # Manages login state, session, and password change logic
+│   │   └── theme_provider.dart            # Mengelola state pergantian tema (Clean White, Carbon Mint, Slate Blue)
 │   ├── screens/
-│   │   ├── login_screen.dart              # Login page with username/password fields, validates against DB (default: user/user)
-│   │   ├── beranda_screen.dart            # Home page: completed/incomplete counts, bar chart, 4 navigation buttons
-│   │   ├── add_important_task_screen.dart # Add Penting task page: date picker, title, description, saves type="penting"
-│   │   ├── add_regular_task_screen.dart   # Add Biasa task page: date picker, title, description, saves type="biasa"
-│   │   ├── task_list_screen.dart          # Task list page: scrollable list, checkboxes, colored arrows, strikethrough
-│   │   └── settings_screen.dart           # Settings page: change password (validates current), developer info (name, NIM, photo)
+│   │   ├── splash_screen.dart             # Splash animasi dengan logo; inisialisasi DB, navigasi ke login
+│   │   ├── login_screen.dart              # Halaman login dengan field username/password, validasi ke DB (default: user/user)
+│   │   ├── beranda_screen.dart            # Halaman utama: jumlah selesai/belum, grafik batang, 4 tombol navigasi
+│   │   ├── tambah_tugas_screen.dart       # Halaman tambah tugas gabungan: menerima parameter kategori (penting/biasa) dan opsional edit tugas
+│   │   ├── daftar_tugas_screen.dart       # Halaman daftar tugas: bisa di-scroll, swipe-to-delete, filter tab (Semua/Penting/Biasa)
+│   │   ├── detail_tugas_screen.dart       # Tampilan detail: judul, tanggal, deskripsi; aksi: edit, hapus, toggle selesai
+│   │   └── pengaturan_screen.dart         # Pengaturan: ganti password, pemilih tema, keluar, info developer
 │   ├── widgets/
-│   │   ├── task_tile.dart                 # Reusable widget for a single task row (checkbox, arrow, title, strikethrough)
-│   │   ├── summary_card.dart              # Reusable card widget showing count (completed/incomplete) on Beranda
-│   │   └── nav_button.dart                # Restyled navigation button widget used on Beranda
+│   │   ├── nav_button.dart                # Widget tombol navigasi dengan gaya kustom yang digunakan di Beranda
+│   │   ├── summary_card.dart              # Widget kartu reusable menampilkan jumlah (selesai/belum) di Beranda
+│   │   ├── weekly_bar_chart.dart          # Widget grafik batang (fl_chart) dengan navigasi minggu dan pemilih bulan
+│   │   ├── daily_task.dart                # Kelas data untuk jumlah tugas selesai per hari (digunakan grafik batang)
+│   │   └── monthly_picker_dialog.dart     # Dialog untuk memilih bulan/tahun untuk navigasi grafik
 │   └── utils/
-│       ├── colors.dart                    # Centralized color constants (penting, biasa, primary, accent, etc.)
-│       └── app_routes.dart                # Named route string constants and onGenerateRoute handler
+│       ├── app_routes.dart                # Konstanta nama rute dan handler onGenerateRoute
+│       ├── colors.dart                    # Konstanta warna lama (tidak dipakai; disimpan sebagai referensi)
+│       └── theme_config.dart              # Kelas AppTheme dan 3 definisi tema (Clean White, Carbon Mint, Slate Blue)
 ├── assets/
 │   └── images/
-│       └── developer_photo.jpg            # Developer photo for Pengaturan screen (placeholder; replace with actual image)
-├── pubspec.yaml                           # Project config with all dependencies and assets declaration
-└── PLAN.md                                # This file
+│       └── developer_photo.jpg            # Foto developer untuk layar Pengaturan
+├── pubspec.yaml                           # Konfigurasi proyek dengan semua dependensi dan deklarasi aset
+└── PLAN.md                                # File ini
 ```
 
 ---
 
-## 2. Database Schema
+## 2. Skema Database
 
-### Table: `users`
-| Column     | Type         | Constraints              | Description                        |
-|------------|--------------|--------------------------|------------------------------------|
-| id         | INTEGER      | PRIMARY KEY AUTOINCREMENT | Unique user ID                    |
-| username   | TEXT         | NOT NULL, UNIQUE         | Login username                    |
-| password   | TEXT         | NOT NULL                 | Login password                    |
+### Tabel: `users`
+| Kolom      | Tipe         | Konstrain                | Deskripsi                        |
+|------------|--------------|--------------------------|----------------------------------|
+| id         | INTEGER      | PRIMARY KEY AUTOINCREMENT | ID pengguna unik                |
+| username   | TEXT         | NOT NULL, UNIQUE         | Username untuk login            |
+| password   | TEXT         | NOT NULL                 | Password untuk login            |
 
-- **Seed data**: On first app launch, insert default row: `(1, 'user', 'user')`
+- **Data awal**: Saat pertama kali aplikasi dijalankan, sisipkan baris default: `(1, 'user', 'user')`
 
-### Table: `tasks`
-| Column        | Type         | Constraints               | Description                              |
-|---------------|--------------|---------------------------|------------------------------------------|
-| id            | INTEGER      | PRIMARY KEY AUTOINCREMENT | Unique task ID                           |
-| title         | TEXT         | NOT NULL                  | Task title                               |
-| description   | TEXT         | NOT NULL DEFAULT ''       | Task description                         |
-| date          | TEXT         | NOT NULL                  | Task date in ISO format (YYYY-MM-DD)     |
-| type          | TEXT         | NOT NULL CHECK(type IN ('penting', 'biasa')) | Task category |
-| is_completed  | INTEGER      | NOT NULL DEFAULT 0        | 0 = incomplete, 1 = completed            |
-| created_at    | TEXT         | NOT NULL DEFAULT CURRENT_TIMESTAMP | Creation timestamp              |
+### Tabel: `tasks`
+| Kolom        | Tipe         | Konstrain                | Deskripsi                               |
+|--------------|--------------|--------------------------|-----------------------------------------|
+| id           | INTEGER      | PRIMARY KEY AUTOINCREMENT | ID tugas unik                          |
+| title        | TEXT         | NOT NULL                 | Judul tugas                             |
+| description  | TEXT         | NOT NULL DEFAULT ''      | Deskripsi tugas                         |
+| due_date     | TEXT         | NOT NULL                 | Tanggal jatuh tempo format ISO (YYYY-MM-DD) |
+| category     | TEXT         | NOT NULL                 | Kategori tugas ('penting' atau 'biasa') |
+| is_done      | INTEGER      | NOT NULL DEFAULT 0       | 0 = belum selesai, 1 = selesai         |
+| created_at   | TEXT         | NOT NULL                 | Stempel waktu pembuatan (YYYY-MM-DD)    |
+| updated_at   | TEXT         | NULLABLE                 | Stempel waktu perubahan terakhir (YYYY-MM-DD) |
 
-### Indexes
-- `idx_tasks_type` on `tasks(type)` — for filtering by category
-- `idx_tasks_date` on `tasks(date)` — for chart date grouping
-- `idx_tasks_completed` on `tasks(is_completed)` — for filtering done/undone
+### Migrasi
+- **v1**: Skema awal dengan tabel `tasks` (6 kolom)
+- **v2**: Buat ulang tabel `tasks`, tambah kolom `due_date` dan `category`
+- **v3**: Tambah kolom `updated_at` melalui ALTER TABLE
 
-### Database Helper Methods
-| Method                             | Description                                              |
-|------------------------------------|----------------------------------------------------------|
-| `initDatabase()`                   | Opens/creates DB, runs onCreate and onUpgrade, inserts seed user |
-| `insertUser(username, password)`   | Inserts a new user record                                |
-| `validateUser(username, password)` | Returns true if credentials match a record               |
-| `updatePassword(username, oldPassword, newPassword)` | Validates old password, then updates to new one |
-| `insertTask(title, description, date, type)` | Inserts a new task, returns generated ID            |
-| `getTasks()`                       | Returns all tasks ordered by created_at DESC             |
-| `getTasksByType(type)`             | Returns tasks filtered by type ('penting' or 'biasa')    |
-| `getCompletedCount()`              | Returns count where is_completed = 1                     |
-| `getIncompleteCount()`             | Returns count where is_completed = 0                     |
-| `getDailyCompletedCounts(days)`    | Returns list of {date, count} for last N days (bar chart) |
-| `toggleTaskCompletion(id)`         | Flips is_completed between 0 and 1                       |
-| `deleteTask(id)`                   | Deletes a task by ID                                     |
+### Metode Database Helper
+| Method                                | Deskripsi                                                  |
+|---------------------------------------|------------------------------------------------------------|
+| `initDatabase()`                      | Membuka/membuat DB, menjalankan onCreate dan onUpgrade, sisip data awal |
+| `getDatabase()`                       | Mengembalikan instance database singleton                  |
+| `validateUser(username, password)`    | Mengembalikan true jika kredensial cocok dengan record     |
+| `getUser()`                           | Mengembalikan record user pertama                          |
+| `updatePassword(newPassword)`         | Memperbarui password untuk user id=1                       |
+| `getTasks()`                          | Mengembalikan semua tugas diurutkan due_date ASC           |
+| `getTask(id)`                         | Mengembalikan satu tugas berdasarkan ID                    |
+| `insertTask(Map)`                     | Menyisipkan tugas baru, mengembalikan ID yang dihasilkan   |
+| `toggleTaskDone(id, isDone)`          | Mengatur is_done dan memperbarui updated_at                |
+| `getTaskCountDone()`                  | Mengembalikan jumlah di mana is_done = 1                   |
+| `getTaskCountPending()`               | Mengembalikan jumlah di mana is_done = 0                   |
+| `getTasksDonePerDay()`                | Mengembalikan peta {tanggal: jumlah} untuk tugas selesai   |
+| `getTasksCompletedPerDay(weekStart)`  | Mengembalikan peta {tanggal: jumlah} untuk rentang minggu tertentu |
+| `deleteTask(id)`                      | Menghapus tugas berdasarkan ID                             |
+| `updateTask(id, data)`                | Memperbarui field tugas berdasarkan ID                     |
 
 ---
 
-## 3. Dependencies
+## 3. Dependensi
 
 ### `pubspec.yaml` — `dependencies`:
-| Package              | Version Range | Purpose                                                    |
+| Paket                | Rentang Versi | Tujuan                                                     |
 |----------------------|---------------|------------------------------------------------------------|
-| `flutter`            | `sdk: flutter` | Core Flutter SDK                                          |
-| `cupertino_icons`    | `^1.0.8`      | iOS-style icon set                                         |
-| `sqflite`            | `^2.3.3`      | SQLite database for local storage                          |
-| `sqflite_common_ffi` | `^2.3.2`      | SQLite FFI support (for testing on desktop)                |
-| `path`               | `^1.9.0`      | Cross-platform path manipulation for DB file location      |
-| `intl`               | `^0.20.2`     | Date/time formatting (Indonesian locale)                   |
-| `fl_chart`           | `^0.69.0`     | Bar chart for tasks-completed-per-day on Beranda           |
-| `shared_preferences` | `^2.3.0`      | Persist login session state (isLoggedIn flag)              |
-| `provider`           | `^6.1.2`      | State management (ChangeNotifier-based)                    |
+| `flutter`            | `sdk: flutter` | SDK inti Flutter                                          |
+| `cupertino_icons`    | `^1.0.8`      | Set ikon gaya iOS                                          |
+| `sqflite`            | `^2.3.3`      | Database SQLite untuk penyimpanan lokal                    |
+| `sqflite_common_ffi` | `^2.3.2`      | Dukungan FFI SQLite (untuk pengujian di desktop)           |
+| `path`               | `^1.9.0`      | Manipulasi path lintas platform untuk lokasi file DB       |
+| `intl`               | `^0.20.2`     | Format tanggal/waktu (lokal Indonesia)                     |
+| `fl_chart`           | `^0.69.0`     | Grafik batang untuk tugas-selesai-per-hari di Beranda      |
+| `shared_preferences` | `^2.3.0`      | Menyimpan state pemilihan tema                             |
+| `provider`           | `^6.1.2`      | Manajemen state (ChangeNotifier untuk ThemeProvider)        |
+| `google_fonts`       | `^6.1.0`      | Google Fonts (Poppins, Inter, Plus Jakarta Sans)           |
 
 ### `pubspec.yaml` — `dev_dependencies`:
-| Package           | Version Range | Purpose                          |
-|-------------------|---------------|----------------------------------|
-| `flutter_test`    | `sdk: flutter`| Flutter testing framework        |
-| `flutter_lints`   | `^5.0.0`      | Recommended lint rules           |
+| Paket             | Rentang Versi | Tujuan                            |
+|-------------------|---------------|-----------------------------------|
+| `flutter_test`    | `sdk: flutter`| Framework pengujian Flutter       |
+| `flutter_lints`   | `^5.0.0`      | Aturan lint yang direkomendasikan |
 
 ### `pubspec.yaml` — `flutter.assets`:
 ```yaml
@@ -111,254 +119,214 @@ flutter:
 
 ---
 
-## 4. Page Navigation Flow
+## 4. Alur Navigasi Halaman
 
-### Route Map (Named Routes)
+### Peta Rute (Rute Bernama)
 
-| Route Name              | Screen Widget                    | Auth Required | Description                              |
-|-------------------------|----------------------------------|---------------|------------------------------------------|
-| `/login`                | `LoginScreen`                    | No            | Entry screen; redirects to `/beranda` on success |
-| `/beranda`              | `BerandaScreen`                  | Yes           | Home dashboard with stats and navigation |
-| `/add-important-task`   | `AddImportantTaskScreen`         | Yes           | Form to add a "penting" task             |
-| `/add-regular-task`     | `AddRegularTaskScreen`           | Yes           | Form to add a "biasa" task               |
-| `/task-list`            | `TaskListScreen`                 | Yes           | Full task list with filter/toggle        |
-| `/settings`             | `SettingsScreen`                 | Yes           | Change password, developer info          |
+| Nama Rute         | Widget Layar                   | Perlu Auth | Deskripsi                               |
+|-------------------|--------------------------------|-----------|------------------------------------------|
+| `/splash`         | `SplashScreen`                 | Tidak     | Layar masuk; inisialisasi DB, animasi, redirect |
+| `/`               | `LoginScreen`                  | Tidak     | Halaman login, validasi ke DB            |
+| `/beranda`        | `BerandaScreen`                | Ya        | Dashboard utama dengan statistik dan navigasi |
+| `/tambah-tugas`   | `TambahTugasScreen`            | Ya        | Form untuk menambah/mengedit tugas (penting/biasa) |
+| `/daftar-tugas`   | `DaftarTugasScreen`            | Ya        | Daftar tugas lengkap dengan filter tab    |
+| `/detail-tugas`   | `DetailTugasScreen`            | Ya        | Tampilan detail tugas dengan aksi edit/hapus |
+| `/pengaturan`     | `PengaturanScreen`             | Ya        | Ganti password, pemilih tema, keluar     |
 
-### Navigation Details
+### Detail Navigasi
 
-1. **App starts** → `main.dart` checks `shared_preferences` for `isLoggedIn` flag
-   - If `true` → navigate to `/beranda`
-   - If `false` → navigate to `/login`
+1. **Aplikasi mulai** → `main.dart` merender `SplashScreen` (rute awal)
+2. **SplashScreen** → inisialisasi DB, memainkan animasi → navigasi ke `/login`
+3. **LoginScreen** → setelah validasi berhasil → `Navigator.pushReplacementNamed('/beranda')`
+4. **BerandaScreen** → berisi 4 tombol navigasi:
+   - "Tambah Tugas Penting" → `TambahTugasScreen(category: 'penting')`
+   - "Tambah Tugas Biasa" → `TambahTugasScreen(category: 'biasa')`
+   - "Daftar Tugas" → `DaftarTugasScreen`
+   - "Pengaturan" → `PengaturanScreen`
+5. **TambahTugasScreen** → setelah simpan → `Navigator.pop(true)` (kembali ke Beranda)
+6. **DaftarTugasScreen** → ketuk tugas → `/detail-tugas` dengan argumen tugas
+7. **DetailTugasScreen** → edit → `/tambah-tugas` dengan data tugas; hapus → konfirmasi → pop
+8. **PengaturanScreen** → "Keluar" → `Navigator.pushReplacementNamed('/')` (kembali ke login)
 
-2. **LoginScreen** → on successful validation → sets `isLoggedIn = true` → `Navigator.pushReplacementNamed('/beranda')`
-
-3. **BerandaScreen** → contains 4 navigation buttons:
-   - "Tambah Tugas Penting" → `Navigator.pushNamed('/add-important-task')`
-   - "Tambah Tugas Biasa" → `Navigator.pushNamed('/add-regular-task')`
-   - "Daftar Tugas" → `Navigator.pushNamed('/task-list')`
-   - "Pengaturan" → `Navigator.pushNamed('/settings')`
-
-4. **AddImportantTaskScreen** → on save → calls `TaskProvider.addTask(type: 'penting')` → `Navigator.pop()` (returns to Beranda)
-
-5. **AddRegularTaskScreen** → on save → calls `TaskProvider.addTask(type: 'biasa')` → `Navigator.pop()` (returns to Beranda)
-
-6. **TaskListScreen** → standalone page; checkboxes update in-place via `TaskProvider.toggleTask()`
-
-7. **SettingsScreen** → "Logout" button → clears `isLoggedIn` → `Navigator.pushReplacementNamed('/login')`
-
-8. **Logout flow**: Available from SettingsScreen; clears session and redirects to login.
-
-### Route Generation Strategy
-- Use `onGenerateRoute` in `MaterialApp` with a switch statement matching route strings to screen constructors.
-- Each screen receives dependencies via `Provider.of()` — no route arguments needed.
+### Strategi Pembuatan Rute
+- Menggunakan `onGenerateRoute` di `AppRoutes.onGenerateRoute`
+- Argumen dikirim melalui `RouteSettings.arguments` untuk `/tambah-tugas` (peta kategori & tugas) dan `/detail-tugas` (peta tugas)
 
 ---
 
-## 5. State Management Approach
+## 5. Pendekatan Manajemen State
 
-### Approach: **Provider (ChangeNotifier)**
+### Pendekatan: **Provider (ChangeNotifier)**
 
-**Why Provider:**
-- The app is small-to-medium in scope (6 screens, 2 data models). Provider is lightweight, well-documented, and sufficient without the boilerplate of BLoC/Riverpod.
-- `ChangeNotifier` pattern is straightforward for CRUD operations on tasks and auth state.
-- Easy for maintainers to understand and extend.
-- No need for complex state trees, middleware, or streams.
+**Mengapa Provider:**
+- Aplikasi berskala kecil (7 layar, satu state tema). Provider ringan dan mencukupi.
+- Pola `ChangeNotifier` mudah digunakan untuk state tema.
+- Tidak perlu pohon state kompleks, middleware, atau stream.
+- Operasi database menggunakan panggilan langsung `DatabaseHelper.instance` (tanpa provider data terpisah).
 
-### Providers:
+### Provider:
 
-#### `AuthProvider` (extends ChangeNotifier)
-| Field/Method             | Description                                        |
-|--------------------------|----------------------------------------------------|
-| `isLoggedIn` (bool)      | Whether the user is currently logged in            |
-| `isLoading` (bool)       | Loading state during login validation              |
-| `login(username, password)` | Validates credentials via DatabaseHelper, sets `isLoggedIn` |
-| `logout()`               | Clears session, resets `isLoggedIn` to false       |
-| `changePassword(oldPwd, newPwd)` | Validates old password, updates DB, notifies listeners |
+#### `ThemeProvider` (extends ChangeNotifier)
+| Field/Method              | Deskripsi                                               |
+|---------------------------|----------------------------------------------------------|
+| `themes` (List<AppTheme>) | Daftar 3 tema yang tersedia                              |
+| `currentTheme` (AppTheme) | Objek tema yang sedang dipilih                           |
+| `selectedThemeIndex` (int)| Indeks tema yang dipilih                                 |
+| `setTheme(index)`         | Mengubah tema, menyimpan ke SharedPreferences, memberi notifikasi |
 
-#### `TaskProvider` (extends ChangeNotifier)
-| Field/Method                  | Description                                          |
-|-------------------------------|------------------------------------------------------|
-| `tasks` (List<Task>)          | All tasks loaded from DB                             |
-| `isLoading` (bool)            | Loading state during DB fetch                        |
-| `completedCount` (int)        | Count of completed tasks                             |
-| `incompleteCount` (int)       | Count of incomplete tasks                            |
-| `dailyCompletedData` (List)   | Data for bar chart (last 7 days)                     |
-| `loadTasks()`                 | Fetches all tasks from DB, computes derived values    |
-| `addTask(title, desc, date, type)` | Inserts task into DB, reloads, notifies listeners |
-| `toggleTaskCompletion(id)`    | Flips completion status in DB, reloads, notifies     |
-| `deleteTask(id)`              | Removes task from DB, reloads, notifies              |
+### Penanganan State (Non-Provider):
+- **Autentikasi**: Tidak ada sesi persisten. Setiap kali aplikasi dimulai dari splash → login. Login memvalidasi langsung via `DatabaseHelper`.
+- **Data tugas**: Setiap layar mengambil data langsung dari `DatabaseHelper.instance`. Tidak ada state tugas terpusat.
+- **Penyegaran data**: Layar menyegarkan dengan memanggil `_loadData()` di `initState()` dan setelah kembali dari layar anak melalui `.then()`.
 
-### Provider Placement:
-- Both providers are declared at the top of the widget tree in `main.dart` via `MultiProvider`.
-- Screens access providers using `Provider.of<T>(context)` or `context.read<T>()` / `context.watch<T>()`.
-- `Consumer<TaskProvider>` used in BerandaScreen and TaskListScreen for efficient rebuilds.
+### Penempatan Provider:
+- `ThemeProvider` dideklarasikan di puncak pohon widget di `main.dart` melalui `ChangeNotifierProvider`.
+- Layar mengakses tema menggunakan `Provider.of<ThemeProvider>(context)`.
+- `context.watch` / `Provider.of` dengan `listen: false` untuk pembacaan satu kali.
 
 ---
 
-## 6. Build Checklist
+## 6. Daftar Periksa Pembangunan
 
-Execute these steps **in order**. Each step must complete before moving to the next.
-
-### Phase 1: Project Setup
-1. [ ] Update `pubspec.yaml`: add all dependencies (sqflite, path, intl, fl_chart, shared_preferences, provider) under `dependencies`
-2. [ ] Update `pubspec.yaml`: add `assets/images/` under `flutter.assets`
-3. [ ] Run `flutter pub get` to fetch all packages
-4. [ ] Create directory structure:
-   - `lib/models/`
-   - `lib/database/`
-   - `lib/providers/`
-   - `lib/screens/`
-   - `lib/widgets/`
-   - `lib/utils/`
+### Fase 1: Persiapan Proyek
+1. [x] Perbarui `pubspec.yaml`: tambah semua dependensi (sqflite, path, intl, fl_chart, shared_preferences, provider, google_fonts)
+2. [x] Perbarui `pubspec.yaml`: tambah `assets/images/` di bawah `flutter.assets`
+3. [x] Jalankan `flutter pub get` untuk mengambil semua paket
+4. [x] Buat struktur direktori:
+   - `lib/models/`, `lib/database/`, `lib/providers/`, `lib/screens/`, `lib/widgets/`, `lib/utils/`
    - `assets/images/`
 
-### Phase 2: Utility & Model Layer
-5. [ ] Create `lib/utils/colors.dart`: define all color constants (see Section 7)
-6. [ ] Create `lib/utils/app_routes.dart`: define route name constants and `onGenerateRoute` function
-7. [ ] Create `lib/models/task.dart`: define `Task` class with `fromJson`, `toJson`, and `copyWith` methods
+### Fase 2: Lapisan Utilitas & Model
+5. [x] Buat `lib/utils/colors.dart`: definisikan konstanta warna lama (disimpan sebagai referensi)
+6. [x] Buat `lib/utils/app_routes.dart`: definisikan konstanta nama rute dan fungsi `onGenerateRoute`
+7. [x] Buat `lib/utils/theme_config.dart`: definisikan kelas `AppTheme` dan 3 definisi tema
+8. [x] Buat `lib/models/task.dart`: definisikan kelas `Task` dengan metode `fromMap`, `toMap`, dan `copyWith`
 
-### Phase 3: Database Layer
-8. [ ] Create `lib/database/database_helper.dart`:
-   - Implement singleton `DatabaseHelper` class
-   - `initDatabase()` with `onCreate` creating `users` and `tasks` tables
-   - Insert seed user `(user, user)` in `onCreate`
-   - Implement all CRUD methods listed in Section 2
-   - Implement `getDailyCompletedCounts(7)` for bar chart data
+### Fase 3: Lapisan Database
+9. [x] Buat `lib/database/database_helper.dart`:
+   - Implementasikan kelas singleton `DatabaseHelper`
+   - `initDatabase()` dengan `onCreate` membuat tabel `users` dan `tasks`
+   - Sisipkan data awal user `(user, user)` di `onCreate`
+   - Tangani migrasi (v1→v3)
+   - Implementasikan semua metode CRUD yang tercantum di Bagian 2
 
-### Phase 4: State Management Layer
-9. [ ] Create `lib/providers/auth_provider.dart`:
-   - Implement `AuthProvider` class extending `ChangeNotifier`
-   - `login()`, `logout()`, `changePassword()` methods
-   - Use `SharedPreferences` for session persistence
-10. [ ] Create `lib/providers/task_provider.dart`:
-    - Implement `TaskProvider` class extending `ChangeNotifier`
-    - `loadTasks()`, `addTask()`, `toggleTaskCompletion()`, `deleteTask()`
-    - Computed getters: `completedCount`, `incompleteCount`, `dailyCompletedData`
+### Fase 4: Lapisan Manajemen State
+10. [x] Buat `lib/providers/theme_provider.dart`:
+    - Implementasikan kelas `ThemeProvider` yang memperluas `ChangeNotifier`
+    - Metode `setTheme()` dengan persistensi SharedPreferences
+    - `_loadSavedTheme()` pada inisialisasi
 
-### Phase 5: Reusable Widgets
-11. [ ] Create `lib/widgets/task_tile.dart`:
-    - Accepts `Task` object and `onToggle` callback
-    - Checkbox for completion toggle
-    - Arrow icon: red (`kPentingColor`) if type='penting', green (`kBiasaColor`) if type='biasa'
-    - Strikethrough text when `task.isCompleted == true`
-12. [ ] Create `lib/widgets/summary_card.dart`:
-    - Displays a count label (e.g., "Tugas Selesai: 5") with an icon
-    - Used on Beranda for completed/incomplete counts
-13. [ ] Create `lib/widgets/nav_button.dart`:
-    - Styled button with icon + label
-    - Used for the 4 navigation buttons on Beranda
+### Fase 5: Widget yang Dapat Digunakan Kembali
+11. [x] Buat `lib/widgets/summary_card.dart`: menampilkan label jumlah dengan angka berwarna ikon
+12. [x] Buat `lib/widgets/nav_button.dart`: tombol bergaya dengan ikon + label untuk navigasi Beranda
+13. [x] Buat `lib/widgets/daily_task.dart`: kelas data untuk nilai harian grafik batang
+14. [x] Buat `lib/widgets/monthly_picker_dialog.dart`: dialog untuk pemilihan bulan/tahun di grafik
+15. [x] Buat `lib/widgets/weekly_bar_chart.dart`: BarChart fl_chart dengan navigasi minggu, pemilih bulan, tooltip
 
-### Phase 6: Screens (Build in dependency order)
-14. [ ] Create `lib/screens/login_screen.dart`:
-    - TextFormFields for username and password
-    - Login button that calls `AuthProvider.login()`
-    - Shows error snackbar on invalid credentials
-    - On success: saves `isLoggedIn = true` via SharedPreferences, navigates to `/beranda`
-15. [ ] Create `lib/screens/beranda_screen.dart`:
-    - AppBar with app title
-    - Two `SummaryCard` widgets (completed count, incomplete count)
-    - `fl_chart` `BarChart` widget showing last 7 days of completed tasks
-    - 4 `NavButton` widgets: Tambah Penting, Tambah Biasa, Daftar Tugas, Pengaturan
-    - Wrapped in `Consumer<TaskProvider>` for auto-refresh
-    - Logout button in AppBar actions
-16. [ ] Create `lib/screens/add_important_task_screen.dart`:
-    - Form with: `DatePicker` (date), `TextFormField` (title), `TextFormField` (description)
-    - Save button: calls `TaskProvider.addTask(type: 'penting')`
-    - Validates all fields are non-empty before saving
-    - On save: pops back to Beranda
-17. [ ] Create `lib/screens/add_regular_task_screen.dart`:
-    - Identical form to above but saves with `type: 'biasa'`
-18. [ ] Create `lib/screens/task_list_screen.dart`:
-    - `ListView.builder` rendering `TaskTile` for each task
-    - Uses `TaskProvider.tasks` from provider
-    - Supports scrolling
-    - AppBar with title and task count
-    - Empty state widget when no tasks exist
-19. [ ] Create `lib/screens/settings_screen.dart`:
-    - "Change Password" section: 3 TextFormFields (current password, new password, confirm new password)
-    - Validate current password matches via `DatabaseHelper`
-    - Validate new password matches confirmation
-    - Save button calls `AuthProvider.changePassword()`
-    - "Developer Info" section: displays name, NIM, and photo (from `assets/images/developer_photo.jpg`)
-    - Logout button at bottom
+### Fase 6: Layar (Bangun sesuai urutan)
+16. [x] Buat `lib/screens/splash_screen.dart`:
+    - Splash animasi dengan ikon gradien, transisi fade + scale
+    - Inisialisasi database, tunda, navigasi ke `/login`
+17. [x] Buat `lib/screens/login_screen.dart`:
+    - Latar belakang gradien, starfield AnimatedBuilder kustom
+    - TextFormField untuk username dan password
+    - Tombol login memvalidasi via `DatabaseHelper.validateUser`
+    - Menampilkan snackbar error jika kredensial tidak valid
+    - Jika berhasil: navigasi ke `/beranda`
+18. [x] Buat `lib/screens/beranda_screen.dart`:
+    - AppBar kustom dengan ikon gradien
+    - Salam dengan username dan tanggal hari ini
+    - Dua widget `SummaryCard` (jumlah selesai, jumlah belum)
+    - Widget `WeeklyBarChart` menampilkan 7 hari terakhir tugas selesai
+    - 4 widget `NavButton` dalam grid 2×2
+    - Efek latar starfield kustom
+19. [x] Buat `lib/screens/tambah_tugas_screen.dart`:
+    - Menerima `category` (penting/biasa) dan opsional `task` untuk mode edit
+    - Form dengan: DatePicker, TextFormField judul, TextFormField deskripsi
+    - Dialog konfirmasi keluar jika form memiliki data
+    - Tombol simpan menyisipkan tugas baru atau memperbarui tugas yang ada
+    - Setelah simpan: kembali dengan hasil `true`
+20. [x] Buat `lib/screens/daftar_tugas_screen.dart`:
+    - Filter tab bar: Semua, Penting, Biasa (dengan jumlah)
+    - `ListView` dengan `Dismissible` untuk swipe-to-delete
+    - Widget `_TaskCard` per baris: checkbox, judul (garis coret jika selesai), label tanggal, lencana terlambat, ikon panah
+    - Ketuk tugas → navigasi ke detail
+    - Widget state kosong
+21. [x] Buat `lib/screens/detail_tugas_screen.dart`:
+    - Lencana kategori, judul, kartu tanggal jatuh tempo, kartu deskripsi
+    - Tombol aksi: "Ubah Tugas" dan "Hapus Tugas"
+    - Dialog konfirmasi hapus
+    - Edit navigasi ke `/tambah-tugas` dengan data tugas
+22. [x] Buat `lib/screens/pengaturan_screen.dart`:
+    - Bagian "Keamanan Akun": 3 field password (saat ini, baru, konfirmasi)
+    - Checkbox tampilkan password
+    - Tombol simpan password dengan validasi
+    - Pemilih tema melalui bottom sheet dengan 3 opsi tema
+    - Bagian "Akun": kartu keluar dengan dialog konfirmasi
+    - Bagian "Developer": nama, NIM, ikon
 
-### Phase 7: App Entry Point & Wiring
-20. [ ] Rewrite `lib/main.dart`:
-    - Wrap app in `MultiProvider` with `AuthProvider` and `TaskProvider`
-    - Initialize `SharedPreferences` and `DatabaseHelper` before `runApp`
-    - Set up `MaterialApp` with:
-      - `title: 'Agenda Nusantara'`
-      - `theme` using color scheme from `utils/colors.dart`
-      - `initialRoute` determined by login state (`/beranda` or `/login`)
-      - `routes` map or `onGenerateRoute` using `utils/app_routes.dart`
-    - Call `TaskProvider.loadTasks()` after login and on app start
+### Fase 7: Entry Point Aplikasi & Perangkaian
+23. [x] Buat `lib/main.dart`:
+    - Bungkus aplikasi dalam `ChangeNotifierProvider<ThemeProvider>`
+    - Inisialisasi `initializeDateFormatting('id_ID')` untuk locale
+    - Setup `MaterialApp` dengan:
+      - `title: 'Tuntas'`
+      - `theme` dari `themeProvider.currentTheme.materialTheme`
+      - `initialRoute: '/splash'`
+      - `onGenerateRoute: AppRoutes.onGenerateRoute`
 
-### Phase 8: Assets
-21. [ ] Add a placeholder developer photo at `assets/images/developer_photo.jpg` (any valid image, to be replaced later)
+### Fase 8: Aset
+24. [x] Tambah foto developer placeholder di `assets/images/developer_photo.jpg`
 
-### Phase 9: Testing & Validation
-22. [ ] Run `flutter analyze` — fix all warnings/errors
-23. [ ] Run `flutter run` on emulator/device — verify all screens load
-24. [ ] Test login flow:
-    - Default credentials (user/user) succeed
-    - Wrong credentials show error
-    - After logout, return to login
-25. [ ] Test task creation:
-    - Add important task → appears in list with red arrow
-    - Add regular task → appears in list with green arrow
-26. [ ] Test task list:
-    - Checkbox toggles completion and strikethrough
-    - Counts on Beranda update after toggle
-27. [ ] Test Beranda chart:
-    - Bar chart reflects completed tasks per day
-28. [ ] Test settings:
-    - Change password with wrong current password → error
-    - Change password with mismatched confirm → error
-    - Successful change persists across logout/login
-29. [ ] Test persistence:
-    - Kill and restart app → login state persists
-    - Tasks persist across restarts
+### Fase 9: Pengujian (perlu diverifikasi)
+25. [ ] Jalankan `flutter analyze` — perbaiki semua peringatan/error
+26. [ ] Jalankan `flutter run` di emulator/perangkat — verifikasi semua layar termuat
+27. [ ] Uji login: kredensial default berhasil, kredensial salah tampilkan error
+28. [ ] Uji pembuatan tugas: penting (panah merah) dan biasa (panah hijau)
+29. [ ] Uji daftar tugas: checkbox toggle garis coret, filter tab, swipe hapus
+30. [ ] Uji detail tugas: edit, hapus, navigasi kembali
+31. [ ] Uji Beranda: jumlah diperbarui, grafik batang mencerminkan tugas selesai
+32. [ ] Uji pengaturan: validasi ganti password, pergantian tema, keluar
 
 ---
 
-## 7. Color Scheme
+## 7. Sistem Warna
 
-### Primary / Theme Colors
-| Constant Name       | Hex Code  | Usage                                         |
-|---------------------|-----------|-----------------------------------------------|
-| `kPrimaryColor`     | `#1565C0` | Main app theme color (blue) — AppBar, buttons  |
-| `kPrimaryLight`     | `#5E92F3` | Light variant of primary for backgrounds       |
-| `kPrimaryDark`      | `#003C8F` | Dark variant of primary for status bar         |
-| `kAccentColor`      | `#FF9800` | Accent color for highlights and FAB            |
-| `kBackgroundColor`  | `#F5F5F5` | App background color (light gray)              |
-| `kSurfaceColor`     | `#FFFFFF` | Card/surface background (white)                |
-| `kTextColor`        | `#212121` | Primary text color (near black)                |
-| `kTextSecondary`    | `#757575` | Secondary/hint text color (gray)               |
+### Arsitektur
+Aplikasi menggunakan **sistem multi-tema** melalui kelas `AppTheme` di `utils/theme_config.dart`. Tiga tema tersedia:
 
-### Task Type Colors
-| Constant Name   | Hex Code  | Usage                                          |
-|-----------------|-----------|------------------------------------------------|
-| `kPentingColor` | `#E53935` | Important task (penting) arrow icon, badges, accents |
-| `kBiasaColor`   | `#43A047` | Regular task (biasa) arrow icon, badges, accents     |
+### Definisi Tema
 
-### Status / Utility Colors
-| Constant Name     | Hex Code  | Usage                                          |
-|-------------------|-----------|------------------------------------------------|
-| `kSuccessColor`   | `#4CAF50` | Success messages, confirmed actions            |
-| `kErrorColor`     | `#F44336` | Error messages, validation failures            |
-| `kCompletedColor` | `#9E9E9E` | Strikethrough/completed task text color        |
+| Nama Tema      | Tipe  | Primer/Aksen | Latar Belakang   | Latar Kartu      |
+|----------------|-------|--------------|------------------|------------------|
+| Clean White    | Terang| `#757575`    | `#F5F5F5`        | `#FFFFFF`        |
+| Carbon Mint    | Gelap | `#2BBFA8`    | `#181E1E`        | `#232D2D`        |
+| Slate Blue     | Gelap | `#4A90D9`    | `#1A2332`        | `#253347`        |
 
-### ThemeData Configuration
+### Warna Kategori Tetap (digunakan di semua tema)
+| Konstanta          | Kode Hex  | Penggunaan                                       |
+|--------------------|-----------|--------------------------------------------------|
+| `AppTheme.fixedRed`   | `#E53935` | Tugas penting (penting) panah, lencana, aksen  |
+| `AppTheme.fixedGreen` | `#43A047` | Tugas biasa (biasa) panah, lencana, aksen       |
+| `AppTheme.fixedBlue`  | `#1E88E5` | Titik tombol navigasi Daftar Tugas              |
+| `AppTheme.fixedGray`  | `#757575` | Titik tombol navigasi Pengaturan                |
+
+### Konfigurasi ThemeData
 ```dart
 ThemeData(
+  brightness: isDark ? Brightness.dark : Brightness.light,
   colorScheme: ColorScheme.fromSeed(
-    seedColor: Color(0xFF1565C0), // kPrimaryColor
-    brightness: Brightness.light,
+    seedColor: accentColor,
+    brightness: isDark ? Brightness.dark : Brightness.light,
   ),
+  textTheme: GoogleFonts.interTextTheme(...),
+  primaryTextTheme: GoogleFonts.plusJakartaSansTextTheme(...),
   appBarTheme: AppBarTheme(
-    backgroundColor: Color(0xFF1565C0),
-    foregroundColor: Colors.white,
+    backgroundColor: Colors.transparent,
+    foregroundColor: textPrimary,
+    elevation: 0,
   ),
   useMaterial3: true,
+  scaffoldBackgroundColor: bgSolid ?? bgBottom,
 )
 ```
