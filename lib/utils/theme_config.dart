@@ -22,7 +22,6 @@ class AppTheme {
   final Color textHint;
   final Color cardBg;
   final Color cardBorder;
-  final bool hasStarField;
 
   const AppTheme({
     required this.name,
@@ -40,7 +39,6 @@ class AppTheme {
     required this.textHint,
     required this.cardBg,
     required this.cardBorder,
-    required this.hasStarField,
   });
 
   ThemeData get materialTheme {
@@ -86,7 +84,6 @@ final List<AppTheme> allThemes = [
     textHint: const Color(0xFFBDBDBD),
     cardBg: Colors.white,
     cardBorder: const Color(0xFFE0E0E0),
-    hasStarField: false,
   ),
 
   AppTheme(
@@ -102,7 +99,6 @@ final List<AppTheme> allThemes = [
     textHint: const Color(0x80FFFFFF),
     cardBg: const Color(0xFF232D2D),
     cardBorder: const Color(0xFF2E3A3A),
-    hasStarField: false,
   ),
 
   AppTheme(
@@ -118,6 +114,5 @@ final List<AppTheme> allThemes = [
     textHint: const Color(0x80FFFFFF),
     cardBg: const Color(0xFF253347),
     cardBorder: const Color(0xFF304055),
-    hasStarField: false,
   ),
 ];

@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -283,8 +282,6 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                 ),
               ),
             ),
-
-          if (currentTheme.hasStarField) const _StarField(),
 
           SafeArea(
             child: Column(
@@ -633,80 +630,4 @@ class _GlassCard extends StatelessWidget {
       child: child,
     );
   }
-}
-
-class _StarField extends StatefulWidget {
-  const _StarField();
-  @override
-  State<_StarField> createState() => _StarFieldState();
-}
-
-class _StarFieldState extends State<_StarField>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-  final _stars = <_Star>[];
-  final _rng   = Random();
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 4),
-    )..repeat(reverse: true);
-    for (int i = 0; i < 55; i++) {
-      _stars.add(_Star(
-        x:       _rng.nextDouble(),
-        y:       _rng.nextDouble(),
-        size:    _rng.nextDouble() * 2.0 + 0.8,
-        opacity: _rng.nextDouble() * 0.5 + 0.2,
-        phase:   _rng.nextDouble(),
-      ));
-    }
-  }
-
-  @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
-
-  @override
-  Widget build(BuildContext context) {
-    final currentTheme = Provider.of<ThemeProvider>(context).currentTheme;
-    return AnimatedBuilder(
-      animation: _ctrl,
-      builder: (_, __) => CustomPaint(
-        painter: _StarPainter(_stars, _ctrl.value, currentTheme.textPrimary),
-        child: const SizedBox.expand(),
-      ),
-    );
-  }
-}
-
-class _Star {
-  final double x, y, size, opacity, phase;
-  const _Star({required this.x, required this.y, required this.size,
-               required this.opacity, required this.phase});
-}
-
-class _StarPainter extends CustomPainter {
-  final List<_Star> stars;
-  final double animValue;
-  final Color starColor;
-  _StarPainter(this.stars, this.animValue, this.starColor);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint();
-    for (final s in stars) {
-      final twinkle = sin((animValue + s.phase) * pi).abs();
-      final alpha   = (s.opacity * (0.4 + 0.6 * twinkle)).clamp(0.0, 1.0);
-      paint.color   = starColor.withValues(alpha:alpha);
-      canvas.drawCircle(
-        Offset(s.x * size.width, s.y * size.height),
-        s.size, paint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_StarPainter old) => old.animValue != animValue;
 }

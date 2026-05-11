@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -46,23 +45,6 @@ class _DaftarTugasScreenState extends State<DaftarTugasScreen> {
     final newStatus = task['is_done'] == 1 ? 0 : 1;
     await _db.toggleTaskDone(task['id'] as int, newStatus);
     _loadTasks();
-  }
-
-  Future<void> _deleteTask(int id) async {
-    await _db.deleteTask(id);
-    _loadTasks();
-    if (mounted) {
-      final currentTheme = Provider.of<ThemeProvider>(context, listen: false).currentTheme;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Tugas berhasil dihapus', style: GoogleFonts.poppins(color: currentTheme.textPrimary)),
-          backgroundColor: currentTheme.successColor,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
   }
 
   bool _isDateOverdue(String dateStr) {
@@ -125,8 +107,6 @@ class _DaftarTugasScreenState extends State<DaftarTugasScreen> {
               ),
             ),
 
-          if (currentTheme.hasStarField) const _StarField(),
-
           SafeArea(
             child: Column(
               children: [
@@ -146,7 +126,6 @@ class _DaftarTugasScreenState extends State<DaftarTugasScreen> {
                                   task: _filteredTasks[index],
                                   onToggle: () => _toggleDone(_filteredTasks[index]),
                                   onTap: () => _navigateToDetail(_filteredTasks[index]),
-                                  onDelete: () => _deleteTask(_filteredTasks[index]['id'] as int),
                                   currentTheme: currentTheme,
                                   isOverdue: _isDateOverdue(_filteredTasks[index]['due_date'] as String),
                                 );
@@ -259,7 +238,6 @@ class _TaskCard extends StatelessWidget {
   final Map<String, dynamic> task;
   final VoidCallback onToggle;
   final VoidCallback onTap;
-  final VoidCallback onDelete;
   final AppTheme currentTheme;
   final bool isOverdue;
 
@@ -267,7 +245,6 @@ class _TaskCard extends StatelessWidget {
     required this.task,
     required this.onToggle,
     required this.onTap,
-    required this.onDelete,
     required this.currentTheme,
     required this.isOverdue,
   });
@@ -288,44 +265,9 @@ class _TaskCard extends StatelessWidget {
       formattedDate = task['due_date'] ?? '';
     }
 
-    return Dismissible(
-      key: Key('task_${task['id']}'),
-      direction: DismissDirection.endToStart,
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        decoration: BoxDecoration(
-          color: currentTheme.errorColor,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: const Icon(Icons.delete_rounded, color: Colors.white, size: 26),
-      ),
-      confirmDismiss: (direction) async {
-        final confirmed = await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            backgroundColor: currentTheme.cardBg,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: Text('Hapus Tugas', style: GoogleFonts.poppins(color: currentTheme.textPrimary, fontWeight: FontWeight.w600)),
-            content: Text('Yakin ingin menghapus tugas ini?', style: GoogleFonts.poppins(color: currentTheme.textSecondary)),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: Text('Batal', style: GoogleFonts.poppins(color: currentTheme.textSecondary)),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                child: Text('Hapus', style: GoogleFonts.poppins(color: currentTheme.errorColor)),
-              ),
-            ],
-          ),
-        );
-        return confirmed ?? false;
-      },
-      onDismissed: (direction) => onDelete(),
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           decoration: BoxDecoration(
             color: currentTheme.cardBg,
@@ -438,78 +380,6 @@ class _TaskCard extends StatelessWidget {
             ],
           ),
         ),
-      ),
     );
   }
-}
-
-class _StarField extends StatefulWidget {
-  const _StarField();
-  @override
-  State<_StarField> createState() => _StarFieldState();
-}
-
-class _StarFieldState extends State<_StarField> with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-  final _stars = <_Star>[];
-  final _rng = Random();
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(vsync: this, duration: const Duration(seconds: 4))..repeat(reverse: true);
-    for (int i = 0; i < 55; i++) {
-      _stars.add(_Star(
-        x: _rng.nextDouble(),
-        y: _rng.nextDouble(),
-        size: _rng.nextDouble() * 2.0 + 0.8,
-        opacity: _rng.nextDouble() * 0.5 + 0.2,
-        phase: _rng.nextDouble(),
-      ));
-    }
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final currentTheme = Provider.of<ThemeProvider>(context).currentTheme;
-    return AnimatedBuilder(
-      animation: _ctrl,
-      builder: (_, __) => CustomPaint(
-        painter: _StarPainter(_stars, _ctrl.value, currentTheme.textPrimary),
-        child: const SizedBox.expand(),
-      ),
-    );
-  }
-}
-
-class _Star {
-  final double x, y, size, opacity, phase;
-  const _Star({required this.x, required this.y, required this.size, required this.opacity, required this.phase});
-}
-
-class _StarPainter extends CustomPainter {
-  final List<_Star> stars;
-  final double animValue;
-  final Color starColor;
-  _StarPainter(this.stars, this.animValue, this.starColor);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint();
-    for (final s in stars) {
-      final twinkle = sin((animValue + s.phase) * pi).abs();
-      final alpha = (s.opacity * (0.4 + 0.6 * twinkle)).clamp(0.0, 1.0);
-      paint.color = starColor.withValues(alpha: alpha);
-      canvas.drawCircle(Offset(s.x * size.width, s.y * size.height), s.size, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_StarPainter old) => old.animValue != animValue;
 }
