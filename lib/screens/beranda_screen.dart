@@ -165,50 +165,50 @@ class _BerandaScreenState extends State<BerandaScreen> {
                               label: 'Tambah Tugas Penting',
                               icon: Icons.add_circle_outline_rounded,
                               dotColor: AppTheme.fixedRed,
-                              onTap: () {
-                                Navigator.push(context,
+                              onTap: () async {
+                                final messenger = ScaffoldMessenger.of(context);
+                                final result = await Navigator.push(context,
                                   MaterialPageRoute(builder: (_) =>
                                     const TambahTugasScreen(category: 'penting')),
-                                ).then((result) {
-                                  _loadData();
-                                  if (result == true && mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('Tugas Penting berhasil ditambahkan',
-                                            style: GoogleFonts.poppins(color: Colors.white)),
-                                        backgroundColor: const Color(0xFF43A047),
-                                        behavior: SnackBarBehavior.floating,
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                        duration: const Duration(seconds: 2),
-                                      ),
-                                    );
-                                  }
-                                });
+                                );
+                                _loadData();
+                                if (result == true && mounted) {
+                                  messenger.showSnackBar(
+                                    SnackBar(
+                                      content: Text('Tugas Penting berhasil ditambahkan',
+                                          style: GoogleFonts.poppins(color: Colors.white)),
+                                      backgroundColor: const Color(0xFF43A047),
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                      duration: const Duration(seconds: 2),
+                                    ),
+                                  );
+                                }
                               },
                             ),
                             NavButton(
                               label: 'Tambah Tugas Biasa',
                               icon: Icons.add_circle_outline_rounded,
                               dotColor: AppTheme.fixedGreen,
-                              onTap: () {
-                                Navigator.push(context,
+                              onTap: () async {
+                                final messenger = ScaffoldMessenger.of(context);
+                                final result = await Navigator.push(context,
                                   MaterialPageRoute(builder: (_) =>
                                     const TambahTugasScreen(category: 'biasa')),
-                                ).then((result) {
-                                  _loadData();
-                                  if (result == true && mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('Tugas Biasa berhasil ditambahkan',
-                                            style: GoogleFonts.poppins(color: Colors.white)),
-                                        backgroundColor: const Color(0xFF43A047),
-                                        behavior: SnackBarBehavior.floating,
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                        duration: const Duration(seconds: 2),
-                                      ),
-                                    );
-                                  }
-                                });
+                                );
+                                _loadData();
+                                if (result == true && mounted) {
+                                  messenger.showSnackBar(
+                                    SnackBar(
+                                      content: Text('Tugas Biasa berhasil ditambahkan',
+                                          style: GoogleFonts.poppins(color: Colors.white)),
+                                      backgroundColor: const Color(0xFF43A047),
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                      duration: const Duration(seconds: 2),
+                                    ),
+                                  );
+                                }
                               },
                             ),
                             NavButton(

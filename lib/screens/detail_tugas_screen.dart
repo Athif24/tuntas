@@ -67,29 +67,29 @@ class _DetailTugasScreenState extends State<DetailTugasScreen> {
     }
   }
 
-  void _navigateToEdit(BuildContext context) {
-    Navigator.pushNamed(
+  Future<void> _navigateToEdit(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final result = await Navigator.pushNamed(
       context,
       '/tambah-tugas',
       arguments: {
         'category': _taskData['category'],
         'task': _taskData,
       },
-    ).then((result) {
-      if (result == true && mounted) {
-        _loadData();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Tugas berhasil diperbarui',
-                style: GoogleFonts.poppins(color: Colors.white)),
-            backgroundColor: const Color(0xFF43A047),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-    });
+    );
+    if (result == true) {
+      _loadData();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Tugas berhasil diperbarui',
+              style: GoogleFonts.poppins(color: Colors.white)),
+          backgroundColor: const Color(0xFF43A047),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   @override

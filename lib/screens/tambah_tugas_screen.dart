@@ -196,7 +196,7 @@ if (_isEditMode) {
           SafeArea(
             child: Column(
               children: [
-                _buildAppBar(context),
+                _buildAppBar(),
 
                 Expanded(
                   child: SingleChildScrollView(
@@ -252,7 +252,7 @@ if (_isEditMode) {
     );
   }
 
-  Widget _buildAppBar(BuildContext context) {
+  Widget _buildAppBar() {
     final currentTheme = Provider.of<ThemeProvider>(context).currentTheme;
 
     return Container(
